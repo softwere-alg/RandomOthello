@@ -136,8 +136,10 @@
         this.cells[i] = [];
         this.flipList[i] = [];
         for (let j = 0; j < 8; j++) {
-          const circle = document.createElement('div');
-          circle.classList.add('circle');
+          const overlay = document.createElement('div');
+          overlay.classList.add('circle');
+          overlay.classList.add('inversion');
+          overlay.style.fontSize = '4vmin';
           const cell = document.createElement('div');
           cell.classList.add('cell');
           cell.dataset.row = i;
@@ -145,8 +147,12 @@
           cell.addEventListener('click', () => {
             this.handleMove(i, j, false);
           });
-          this.cells[i][j] = new Cell(cell, EMPTY);
-          cell.appendChild(circle);
+          let inversion = getRandomInt(51) + 50;
+          if (2 <= i && i <= 5 && 2 <= j && j <= 5) {
+            inversion = 100;
+          }
+          this.cells[i][j] = new Cell(cell, EMPTY, inversion);
+          cell.appendChild(overlay);
           this.boardElemant.appendChild(cell);
 
           this.flipList[i][j] = {};
@@ -241,12 +247,23 @@
         return;
       }
 
-      const toFlip = this.flipList[row][col][this.currentPlayer];
+      const inversion = this.cells[row][col].inversion;
+      let flipPlayer;
+      // 自分が置く
+      if (getRandomInt(100) < inversion) {
+        flipPlayer = this.currentPlayer;
+      }
+      else {
+        console.log("inversion");
+        flipPlayer = this.currentPlayer === BLACK ? WHITE : BLACK;
+      }
+
+      const toFlip = this.flipList[row][col][flipPlayer];
 
       toFlip.forEach(cell => {
         cell.flip();
       });
-      this.cells[row][col].setPlayer(this.currentPlayer);
+      this.cells[row][col].setPlayer(flipPlayer);
 
       this.currentPlayer = this.currentPlayer === BLACK ? WHITE : BLACK;
       this.cellUpdate();
@@ -373,11 +390,12 @@
   }
 
   class Cell {
-    constructor(element, player) {
+    constructor(element, player, inversion) {
       this.element = element;
       this.player = player;
       this.canPutBlack = false;
       this.canPutWhite = false;
+      this.inversion = inversion;
     }
 
     setPlayer(player) {
@@ -416,12 +434,23 @@
         //   this.element.style.backgroundColor = '#27ae60ff';
         // }
         this.element.style.backgroundColor = '#27ae60ff';
+        for (const iterator of this.element.children) {
+          if (iterator.classList.contains('circle')) {
+            iterator.style.backgroundColor = '#00000000';
+          }
+          if (iterator.classList.contains('inversion')) {
+            iterator.innerText = this.inversion;
+          }
+        } 
       }
       else {
         // this.element.style.backgroundColor = this.player;
         for (const iterator of this.element.children) {
           if (iterator.classList.contains('circle')) {
             iterator.style.backgroundColor = this.player;
+          }
+          if (iterator.classList.contains('inversion')) {
+            iterator.innerText = '';
           }
         }
       }
