@@ -31,9 +31,42 @@
     width: 10vmin;
     height: 10vmin;
   }
+  .wrap {
+    width: 50vmin;
+    margin: auto;
+    z-index: 1;
+    visibility: hidden;
+    /* position: absolute;
+    top: 25vmin;
+    left: 0vmin; */
+  }
+  .msg {
+    color: whitesmoke;
+    text-align: center;
+    font-family: 'Bree Serif', Courier, monospaced;
+    font-size: 3.5em;
+    width: 50vmin;
+    height: 50vmin;
+    position: absolute;
+    margin: calc(25vmin - 0.5em) 0 0 0;
+  }
+  .sticker {
+    width: 50vmin;
+    height: 50vmin;
+    position: absolute;
+    animation: spin 10s linear infinite;
+    animation-play-state: running; 
+  }
+  @keyframes spin {
+    100% {transform: rotate(1turn); }
+  }
 </style>
 </head>
 <body>
+<div class="wrap" id="inversionEffect">
+  <img class="sticker" src="https://s3-us-west-2.amazonaws.com/s.cdpn.io/13034/sticker.png">
+  <div class="msg">反転!</div>
+</div>
 <div id="whitePlayerFrame" style="background-color: rgb(115, 29, 29); border: 2px solid black;">
   <table>
     <td>
@@ -121,8 +154,8 @@
       this.playerList = {};
 
       const queries = getUrlQueries();
-      this.playerList[BLACK] = queries['p1'] ?? HUMAN;
-      this.playerList[WHITE] = queries['p2'] ?? COM;
+      this.playerList[WHITE] = queries['p1'] ?? COM;
+      this.playerList[BLACK] = queries['p2'] ?? HUMAN;
 
       this.initializeBoard();
       this.cellUpdate();
@@ -252,24 +285,43 @@
       // 自分が置く
       if (getRandomInt(100) < inversion) {
         flipPlayer = this.currentPlayer;
+
+        const toFlip = this.flipList[row][col][flipPlayer];
+
+        toFlip.forEach(cell => {
+          cell.flip();
+        });
+        this.cells[row][col].setPlayer(flipPlayer);
+
+        this.currentPlayer = this.currentPlayer === BLACK ? WHITE : BLACK;
+        this.cellUpdate();
+        this.elementUpdate();
+
+        this.turnSwitchCheck();
       }
       else {
+        const inversionEffect = document.getElementById('inversionEffect');
+        inversionEffect.style.visibility = 'visible';
         console.log("inversion");
-        flipPlayer = this.currentPlayer === BLACK ? WHITE : BLACK;
+        let intervalId = setTimeout(() => {
+          inversionEffect.style.visibility = 'hidden';
+
+          flipPlayer = this.currentPlayer === BLACK ? WHITE : BLACK;
+
+          const toFlip = this.flipList[row][col][flipPlayer];
+
+          toFlip.forEach(cell => {
+            cell.flip();
+          });
+          this.cells[row][col].setPlayer(flipPlayer);
+
+          this.currentPlayer = this.currentPlayer === BLACK ? WHITE : BLACK;
+          this.cellUpdate();
+          this.elementUpdate();
+
+          this.turnSwitchCheck();
+        }, 1500);
       }
-
-      const toFlip = this.flipList[row][col][flipPlayer];
-
-      toFlip.forEach(cell => {
-        cell.flip();
-      });
-      this.cells[row][col].setPlayer(flipPlayer);
-
-      this.currentPlayer = this.currentPlayer === BLACK ? WHITE : BLACK;
-      this.cellUpdate();
-      this.elementUpdate();
-
-      this.turnSwitchCheck();
     }
 
     comProcess() {
